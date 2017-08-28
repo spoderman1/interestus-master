@@ -7,15 +7,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 
+
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -28,26 +23,24 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthCredential;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.Manifest.permission.READ_CONTACTS;
 
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
 
 
-    private static int RC_SIGN_IN =0;
+   /* private static int RC_SIGN_IN =0;
     private static String TAG = "MAIN_ACTIVITY";
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
+    private FirebaseAuth.AuthStateListener mAuthListener;*/
 
+
+    private static final int RC_SIGN_IN = 0;
+    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +48,56 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         setContentView(R.layout.activity_login);
         // Set up the login form.
 
-        mAuth = FirebaseAuth.getInstance();
+        auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            //user signed in
+            Log.d("AUTH", auth.getCurrentUser().getEmail());
+        }else{
+
+
+            startActivityForResult(AuthUI.getInstance()
+                    .createSignInIntentBuilder()
+                    .setProviders(
+                            AuthUI.FACEBOOK_PROVIDER,
+                            AuthUI.EMAIL_PROVIDER,
+                            AuthUI.GOOGLE_PROVIDER)
+                    .build(), 1);
+        }
+
+        findViewById(R.id.sign_out_button).setOnClickListener(this);
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN){
+            if(resultCode == RESULT_OK){
+                Log.d("AUTH", auth.getCurrentUser().getEmail());
+            }
+            else{
+                Log.d("AUTH", "NOT AUTHENTICATED");
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        if(view.getId() == R.id.sign_out_button){
+            AuthUI.getInstance()
+                    .signOut(this)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Log.d("AUTH", "USER LOGGED OUT");
+                        }
+                    });
+        }
+    }
+}
+
+
+        /*mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -147,6 +189,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                    }
                });
     }
-
-}
+*/
+//}
 
